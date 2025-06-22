@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: trellish
+  datasource:
+    url:
+    username:
+    password:
+    driver-class-name: org.postgresql.Driver
+logging:
+  level:
+    org:
+      jooq:
+        tools:
+          LoggerListener=DEBUG:
