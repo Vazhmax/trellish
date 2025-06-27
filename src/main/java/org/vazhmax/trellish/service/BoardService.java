@@ -22,8 +22,7 @@ public final class BoardService {
     private final BoardMapper boardMapper;
 
     public List<BoardDto> getAll() {
-        return db.selectFrom(BOARD).where(BOARD.IS_DELETED.eq(false)).fetch()
-                .stream().map(boardMapper::toDto).toList();
+        return db.fetch(BOARD, BOARD.IS_DELETED.isFalse()).map(boardMapper::toDto);
     }
 
     public BoardDto getById(Integer id) {
@@ -44,18 +43,22 @@ public final class BoardService {
     public BoardDto changeName(Integer id, String name) {
         checkNameTaken(name);
 
-        db.update(BOARD).set(BOARD.NAME, name).where(BOARD.ID.eq(id)).and(BOARD.IS_DELETED.eq(false)).execute();
+        var board = getRecordById(id);
+        board.setName(name);
+        board.store();
 
-        return getById(id);
+        return boardMapper.toDto(board);
     }
 
     public void delete(Integer id){
-        getRecordById(id);
-        db.update(BOARD).set(BOARD.IS_DELETED, true).where(BOARD.ID.eq(id)).execute();
+        var board = getRecordById(id);
+
+        board.setIsDeleted(true);
+        board.store();
     }
 
     private void checkNameTaken(String name){
-        db.fetchOptional(BOARD, BOARD.NAME.eq(name), BOARD.IS_DELETED.eq(false))
+        db.fetchOptional(BOARD, BOARD.NAME.eq(name), BOARD.IS_DELETED.isFalse())
                 .ifPresent(s -> {
                     throw new BadRequestException(
                             String.format("Board with name %s already exists: %s", s.getName(), s.getId()));
@@ -64,7 +67,7 @@ public final class BoardService {
 
 
     private BoardRecord getRecordById(Integer id){
-        return db.fetchOptional(BOARD, BOARD.ID.eq(id), BOARD.IS_DELETED.eq(false))
+        return db.fetchOptional(BOARD, BOARD.ID.eq(id), BOARD.IS_DELETED.isFalse())
                 .orElseThrow(() -> new NotFoundException(String.format("Board with id %s not found", id)));
     }
 }
