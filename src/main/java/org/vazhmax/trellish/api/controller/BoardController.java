@@ -31,7 +31,12 @@ public final class BoardController {
 
     @GetMapping(GET_BY_ID)
     public BoardDto getById(@PathVariable Integer id) {
-        return boardService.getById(id);
+        var board = boardService.getById(id);
+
+        List<TaskStateDto> taskStates = taskStateService.getByBoardId(id);
+        board.setTaskStates(taskStates);
+
+        return board;
     }
 
     @PostMapping(CREATE_BOARD)
